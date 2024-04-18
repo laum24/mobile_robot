@@ -8,6 +8,9 @@
 
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="simulated_state_publisher" output="screen"/>
 
+        <arg name="rvizconfig" default="$(find slm_sim)/rviz/manipulator.rviz" />
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" /> 
+        <node name="puzzlebot_sim" pkg="localisation" type="puzzlebot_sim.py" output="screen" />
+
 
 </launch>
