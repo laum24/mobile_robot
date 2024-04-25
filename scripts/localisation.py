@@ -61,6 +61,8 @@ class Localisation:
             odometry_msg.pose.pose.position.x = self.x
             odometry_msg.pose.pose.position.y = self.y
             odometry_msg.pose.pose.orientation.z = self.theta
+            odometry_msg.twist.twist.linear.x = self.v
+            odometry_msg.twist.twist.angular.z = self.w
             self.odom_pub.publish(odometry_msg)
             previous_time = rospy.get_time()
             rate.sleep()

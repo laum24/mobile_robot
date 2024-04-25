@@ -80,6 +80,7 @@ class PuzzlebotCinematicModel:
             self.wr_pub.publish(wr_msg)
 
             self.loop_rate.sleep()
+            
 if __name__ == '__main__':
     controller = PuzzlebotCinematicModel()
     controller.kinematic_model()
