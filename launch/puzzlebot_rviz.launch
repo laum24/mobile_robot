@@ -5,6 +5,7 @@
 
         <arg name="puzzlebot_sim_model" default="$(find localisation)/urdf/puzzlebot_jetson_ed_urdf.urdf"/>
         <param name="robot_description" command="cat $(arg puzzlebot_sim_model)" />
+        <rosparam file="$(find localisation)/config/path.yaml" command = "load"/>
 
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="simulated_state_publisher" output="screen"/>
 
@@ -15,6 +16,8 @@
         <node name="puzzlebot_sim" pkg="localisation" type="puzzlebot_sim.py" output="screen" />
         <node name="localisation" pkg="localisation" type="localisation.py" output="screen" />
         <node name="joint_state_pub" pkg="localisation" type="joint_state_pub.py" output="screen" />
+        <node name="controller" pkg="localisation" type="controller.py" output="screen" />
+        <node name="path_generator" pkg="localisation" type="path_generator.py" output="screen" />
 
 
 </launch>

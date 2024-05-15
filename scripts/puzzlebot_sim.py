@@ -2,85 +2,79 @@
 import rospy
 import numpy as np
 from std_msgs.msg import Float32
-from numpy.linalg import inv
 from geometry_msgs.msg import Twist, PoseStamped
+from numpy.linalg import inv
 
-class PuzzlebotCinematicModel:
+class PuzzlebotController:
     def __init__(self):
         rospy.init_node("puzzlebot_sim")
-        rospy.loginfo("puzzlebot sim has started")
+        rospy.loginfo("Node puzzlebot_sim has been started")
 
         # Initialize variables
         self.x = 0
         self.y = 0
-        self.psi = 0
+        self.theta = 0
         self.v = 0
         self.w = 0
-        self.r_wheel = 0.05
-        self.wheelbase = 0.19
+        self.rad = 0.05 
+        self.d = 0.19
 
-        # Setup the publishers
-        self.wl_pub = rospy.Publisher("/wl",Float32,queue_size=10)
-        self.wr_pub = rospy.Publisher("/wr",Float32,queue_size=10)
-        self.pose_pub = rospy.Publisher("/pose",PoseStamped,queue_size=10)
+        # Setup Publishers
+        #self.pub_pose = rospy.Publisher("/pose", PoseStamped, queue_size=10)
+        self.pub_vel_left = rospy.Publisher("/wl", Float32, queue_size=10)
+        self.pub_vel_right = rospy.Publisher("/wr", Float32, queue_size=10)
 
-        # Setup the subscribers
-        rospy.Subscriber("/cmd_vel", Twist, self.cmdvel_callback)
+        # Setup Subscriber
+        rospy.Subscriber("/cmd_vel", Twist, self.vel_callback)
 
-        # Rate 
+        # Rate control
         self.loop_rate = rospy.Rate(rospy.get_param("~node_rate", 100))
 
-    # Define the callback functions
-    def cmdvel_callback(self, msg):
+    def vel_callback(self, msg):
         self.v = msg.linear.x
         self.w = msg.angular.z
 
-    def wrap_to_Pi(theta):
-        result = np.fmod((theta + np.pi),(2 * np.pi))
-        if(result < 0):
-            result += 2 * np.pi
-        return result - np.pi
-    
-    def kinematic_model(self):
+    def jacobiano(self):
         while not rospy.is_shutdown():
-            matrix = np.array([[self.r_wheel/2, self.r_wheel/2],
-                    [self.r_wheel/self.wheelbase, -self.r_wheel/self.wheelbase]])
-            inv_martrix = inv(matrix)
-            velocities_array = np.array([self.v,self.w]) #Linear velocity, Angular velocity (psi/theta)
-            phi_array = np.dot(inv_martrix,velocities_array) #Angular velocities of each wheel
-            self.wl = phi_array[0]
-            self.wr = phi_array[1]
+            R = np.array([[self.rad/2, self.rad/2],[self.rad/self.d, -self.rad/self.d]])
+            R_inversa = inv(R)
+            velocities_vector = np.array([self.v, self.w])
+            multiply_R_Vel = np.dot(R_inversa, velocities_vector)
+            self.wl = multiply_R_Vel[0]
+            self.wr = multiply_R_Vel[1]
 
-            dt = 0.01 # Integration step
-            jacobiano = np.array([[self.r_wheel*np.cos(self.psi)/2,self.r_wheel*np.cos(self.psi)/2],
-                        [self.r_wheel*np.sin(self.psi)/2, self.r_wheel*np.sin(self.psi)/2],
-                        [self.r_wheel/self.wheelbase, -self.r_wheel/self.wheelbase]])
-            pose_array = np.dot(jacobiano,phi_array)
+            dt = 0.01  # frequency
+            matriz_jacobiano = np.array([[self.rad*np.cos(self.theta)/2, self.rad*np.cos(self.theta)/2],
+                                          [self.rad*np.sin(self.theta)/2, self.rad*np.sin(self.theta)/2],
+                                          [self.rad/2, -self.rad/self.d]])
 
-            # Update pose
-            self.x += pose_array[0] * dt
-            self.y += pose_array[1] * dt
-            self.psi += pose_array[2] * dt
+            vel_inercial = np.dot(matriz_jacobiano, multiply_R_Vel)
+            
+            # Update position
+            self.x += vel_inercial[0] *dt
+            self.y += vel_inercial[1] *dt
+            self.theta += vel_inercial[2] *dt
 
-            # Publish pose
+            # Publish Pose
+            '''
             pose_msg = PoseStamped()
-            pose_msg.header.stamp = rospy.Time.now()
             pose_msg.pose.position.x = self.x
             pose_msg.pose.position.y = self.y
-            pose_msg.pose.orientation.z = self.psi
-            self.pose_pub.publish(pose_msg)
+            pose_msg.pose.orientation.z = self.theta
+            self.pub_pose.publish(pose_msg)
+            '''
 
-            # Publish wheel velocities
-            wl_msg = Float32()
-            wl_msg.data = self.wl
-            self.wl_pub.publish(wl_msg)
+            # Publish Velocities
+            vel_left_msg = Float32()
+            vel_left_msg.data = self.wl
+            self.pub_vel_left.publish(vel_left_msg)
 
-            wr_msg = Float32()
-            wr_msg.data = self.wr
-            self.wr_pub.publish(wr_msg)
+            vel_right_msg = Float32()
+            vel_right_msg.data = self.wr
+            self.pub_vel_right.publish(vel_right_msg)
 
             self.loop_rate.sleep()
-            
+
 if __name__ == '__main__':
-    controller = PuzzlebotCinematicModel()
-    controller.kinematic_model()
+    controller = PuzzlebotController()
+    controller.jacobiano()

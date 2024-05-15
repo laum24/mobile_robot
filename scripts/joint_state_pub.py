@@ -60,7 +60,6 @@ def publish_transforms():
         wr_link_to_base.transform.translation.z = 0.0
         wr_link_to_base.transform.rotation.w = 1.0  # No rotation
         tf_broadcaster.sendTransform([wl_link_to_base, wr_link_to_base])
-
         rate.sleep()
 
 if __name__ == '__main__':
