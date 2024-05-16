@@ -29,7 +29,7 @@ class Controller():
         # DISTANCES
         d = 100000.0
         d_min = 0.05 #[m] min distance to the goal
-        e_theta_min = np.pi/90
+        e_theta_min = 0.05
 
         # Vels max and Min
         w_max = 0.5
@@ -108,7 +108,7 @@ class Controller():
         print("Node initialized")
 
         while not rospy.is_shutdown():
-            if d >= d_min and self.flag==0:
+            if self.flag==0:
                 delta_t = rospy.get_time() - previous_time
                 previous_time = rospy.get_time() #Update time after use it
                 self.v = r*(self.wl+self.wr)/2.0
@@ -118,6 +118,7 @@ class Controller():
                 print("xG:" + str(self.xG))
                 print("yG:" + str(self.yG))
                 e3 = d
+                print("Error d (lineal): ", e3)
 
                 #Angle to reach the goal
                 theta_g = np.arctan2(self.yG - self.yr, self.xG - self.xr)
@@ -157,35 +158,51 @@ class Controller():
                 #Input for linear velocity
                 u3 = u2
 
-                m_input = u0
-                m_input1 = u2
+                m_input = u0 #angular vel input
+                m_input1 = u2 #linear vel input
 
                 print("m_input angular: " + str(m_input))
                 print("m_input linear: " + str(m_input1))
+                print("Error en theta: ", e_theta)
+                print("Error en theta necesario: ", e_theta_min)
+                print("x real", self.xr)
+                print("y real", self.yr)
+                print("MOD ", str(abs(e_theta%3.141592)))
 
-                if(abs(e_theta) > e_theta_min):
+                if(abs(e_theta%3.141592) > e_theta_min): #avoid difference in radians
                     w = abs(m_input) * e_theta
                     v = 0
-                else:
-                    v = abs(m_input1) * d
-                    w = abs(m_input) * e_theta
+                    print("resta ", str(abs(e_theta)-3.141592))
 
-                if(w > w_max):
+                elif(abs(e_theta%3.141592) < e_theta_min) and abs(d)>=0.07:
+                    v = abs(m_input1) * d
+                    w = 0
+                
+                else:
+                    print("Stop")
+                    self.flag = 1
+                    self.flag_pub.publish(self.flag)
+                    v_msg.linear.x = 0.0
+                    v_msg.angular.z = 0.0
+                    d = 0
+
+
+                if w > w_max:
                     w = w_max
-                elif(w < -w_max):
+                elif self.w < -w_max:
                     w = -w_max
-                elif(w < w_min and w>0):
+                elif self.w < w_min and w > 0:
                     w = w_min
-                elif(w > -w_min and w<0):
+                elif self.w > -w_min and w < 0:
                     w = -w_min
 
-                if(v > v_max):
+                if v > v_max:
                     v = v_max
-                elif(v < -v_max):
+                elif self.v < -v_max:
                     v = -v_max
-                elif(v <  v_min and v > 0):
+                elif v < v_min and v > 0:
                     v = v_min
-                elif(v > -v_min and v < 0): 
+                elif v > -v_min and v < 0:
                     v = -v_min
                 
                 v_msg.linear.x = v
