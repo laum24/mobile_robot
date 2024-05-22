@@ -8,16 +8,17 @@
         <rosparam file="$(find localisation)/config/path.yaml" command = "load"/>
 
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="simulated_state_publisher" output="screen"/>
-
+        <include file="$(find puzzlebot_gazebo)/launch/puzzlebot_gazebo.launch"></include>
         <!-- <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher"/> !-->
 
-        <arg name="rvizconfig" default="$(find slm_sim)/rviz/manipulator.rviz" />
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" /> 
+       <!-- <arg name="rvizconfig" default="$(find slm_sim)/rviz/manipulator.rviz" /> !-->
+       <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" /> !-->
         <node name="puzzlebot_sim" pkg="localisation" type="puzzlebot_sim.py" output="screen" />
         <node name="localisation" pkg="localisation" type="localisation.py" output="screen" />
         <node name="joint_state_pub" pkg="localisation" type="joint_state_pub.py" output="screen" />
         <node name="controller" pkg="localisation" type="controller.py" output="screen" />
         <node name="path_generator" pkg="localisation" type="path_generator.py" output="screen" />
+        <node name="lidar" pkg="localisation" type="lidar.py" output="screen" />
 
 
 </launch>

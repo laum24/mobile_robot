@@ -21,11 +21,11 @@ class PuzzlebotController:
 
         # Setup Publishers
         #self.pub_pose = rospy.Publisher("/pose", PoseStamped, queue_size=10)
-        self.pub_vel_left = rospy.Publisher("/wl", Float32, queue_size=10)
-        self.pub_vel_right = rospy.Publisher("/wr", Float32, queue_size=10)
+        self.pub_vel_left = rospy.Publisher("/puzzlebot_1/wl", Float32, queue_size=10)
+        self.pub_vel_right = rospy.Publisher("/puzzlebot_1/wr", Float32, queue_size=10)
 
         # Setup Subscriber
-        rospy.Subscriber("/cmd_vel", Twist, self.vel_callback)
+        rospy.Subscriber("/puzzlebot_1/base_controller/cmd_vel", Twist, self.vel_callback)
 
         # Rate control
         self.loop_rate = rospy.Rate(rospy.get_param("~node_rate", 100))

@@ -24,8 +24,8 @@ class Localisation:
         self.kl = 0.00001  # Error coefficient for the left wheel
 
         # Setup Subscriber
-        rospy.Subscriber("/wl", Float32, self.wl_callback)
-        rospy.Subscriber("/wr", Float32, self.wr_callback)
+        rospy.Subscriber("/puzzlebot_1/wr", Float32, self.wl_callback)
+        rospy.Subscriber("/puzzlebot_1/wl", Float32, self.wr_callback)
 
         # Setup Publisher
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
